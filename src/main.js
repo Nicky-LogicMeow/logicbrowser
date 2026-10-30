@@ -312,27 +312,20 @@ async function fetchSuggestions(q) {
   q = (q || '').trim();
   if (!q) return [];
   const results = [];
+  const seen = new Set();
 
-  // 1. Query logicmeow suggestions
-  try {
-    const res = await net.fetch(SUGGEST_URL + encodeURIComponent(q));
-    const data = await res.json();
-    if (Array.isArray(data.phrases)) {
-      results.push(...data.phrases);
-    } else if (Array.isArray(data.suggestions)) {
-      for (const item of data.suggestions) {
-        const text = typeof item === 'string' ? item : item.phrase || item.title || item.text;
-        if (text) results.push(text);
-      }
-    } else if (Array.isArray(data) && Array.isArray(data[1])) {
-      results.push(...data[1]);
-    } else if (Array.isArray(data)) {
-      results.push(...data.map((d) => (typeof d === 'string' ? d : d.phrase || d.text)).filter(Boolean));
+  const add = (phrase) => {
+    if (!phrase || typeof phrase !== 'string') return;
+    const clean = phrase.trim();
+    const lower = clean.toLowerCase();
+    if (clean.length > 0 && !seen.has(lower)) {
+      seen.add(lower);
+      results.push(clean);
     }
-  } catch {}
+  };
 
-  // 2. High-speed fallback / augmentation from Google Search Suggest
-  if (results.length < 6) {
+  // 1. Google Suggest (ultra fast & accurate)
+  const pGoogle = (async () => {
     try {
       const gRes = await net.fetch(
         `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(q)}`,
@@ -340,15 +333,42 @@ async function fetchSuggestions(q) {
       );
       const gData = await gRes.json();
       if (Array.isArray(gData) && Array.isArray(gData[1])) {
-        for (const s of gData[1]) {
-          if (typeof s === 'string' && !results.some((r) => r.toLowerCase() === s.toLowerCase())) {
-            results.push(s);
-          }
+        for (const s of gData[1]) add(s);
+      }
+    } catch {}
+  })();
+
+  // 2. DuckDuckGo Autocomplete
+  const pDdg = (async () => {
+    try {
+      const dRes = await net.fetch(
+        `https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}&type=list`
+      );
+      const dData = await dRes.json();
+      if (Array.isArray(dData) && Array.isArray(dData[1])) {
+        for (const s of dData[1]) add(s);
+      }
+    } catch {}
+  })();
+
+  // 3. Logicmeow Suggest
+  const pLogic = (async () => {
+    try {
+      const res = await net.fetch(SUGGEST_URL + encodeURIComponent(q));
+      const data = await res.json();
+      if (Array.isArray(data.phrases)) {
+        for (const s of data.phrases) add(s);
+      } else if (Array.isArray(data.suggestions)) {
+        for (const item of data.suggestions) {
+          add(typeof item === 'string' ? item : item.phrase || item.title || item.text);
         }
       }
     } catch {}
-  }
-  return results.slice(0, 8);
+  })();
+
+  await Promise.allSettled([pGoogle, pDdg, pLogic]);
+
+  return results.slice(0, 16);
 }
 
 // ---------------------------------------------------------------------------
@@ -1066,6 +1086,19 @@ ipcMain.handle('pip-context-menu', (_e, { currentOpacity = 0.94, isPinned = true
   ]);
 
   menu.popup({ window: pipWindow });
+});
+
+ipcMain.handle('tab-context-menu', (_e, { tabId, url, isMuted, isPrivate }) => {
+  const menu = Menu.buildFromTemplate([
+    { label: 'reload', click: () => send('command', 'reload-tab', tabId) },
+    { label: 'duplicate tab', click: () => send('open-url', url, { private: isPrivate }) },
+    { label: isMuted ? '🔊  unmute tab' : '🔇  mute tab', click: () => send('command', 'toggle-mute-tab', tabId) },
+    { label: 'pin video to overlay (pip)', click: () => send('command', 'pip') },
+    { type: 'separator' },
+    { label: 'close tab', click: () => send('command', 'close-tab-by-id', tabId) },
+    { label: 'close other tabs', click: () => send('command', 'close-other-tabs', tabId) },
+  ]);
+  menu.popup({ window: mainWindow });
 });
 
 ipcMain.handle('get-state', () => ({

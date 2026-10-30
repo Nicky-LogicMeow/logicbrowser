@@ -86,12 +86,14 @@
       wcId: null,
       zoom: 0,
       failedUrl: null,
+      isPlayingAudio: false,
+      isAudioMuted: false,
     };
 
     // tab element
     const t = document.createElement('div');
     t.className = 'tab' + (isPrivate ? ' private' : '');
-    t.innerHTML = `<span class="fav"></span><span class="title"></span>${isPrivate ? '<span class="badge">prv</span>' : ''}<button class="close" title="close tab" tabindex="-1">×</button>`;
+    t.innerHTML = `<span class="fav"></span><span class="title"></span><button class="mute-tab hidden" title="mute tab" tabindex="-1">🔊</button>${isPrivate ? '<span class="badge">prv</span>' : ''}<button class="close" title="close tab" tabindex="-1">×</button>`;
 
     setupTabEvents(t, tab);
     tab.el = t;
@@ -117,11 +119,28 @@
     return tab;
   }
 
+  function toggleTabMute(tab) {
+    if (!tab || !tab.wv) return;
+    tab.isAudioMuted = !tab.isAudioMuted;
+    try {
+      tab.wv.setAudioMuted(tab.isAudioMuted);
+    } catch {}
+    renderTab(tab);
+  }
+
   function wireWebview(tab) {
     const wv = tab.wv;
     wv.addEventListener('dom-ready', () => {
       if (!tab.wcId) tab.wcId = wv.getWebContentsId();
       if (tab.zoom) wv.setZoomLevel(tab.zoom);
+    });
+    wv.addEventListener('media-started-playing', () => {
+      tab.isPlayingAudio = true;
+      renderTab(tab);
+    });
+    wv.addEventListener('media-paused', () => {
+      tab.isPlayingAudio = false;
+      renderTab(tab);
     });
     wv.addEventListener('did-start-loading', () => {
       tab.loading = true;
@@ -223,6 +242,17 @@
     tab.el.querySelector('.title').textContent = tab.title || tab.url;
     tab.el.title = `${tab.title}\n${displayUrl(tab)}`;
     tab.el.classList.toggle('active', tab === active);
+
+    const muteBtn = tab.el.querySelector('.mute-tab');
+    if (muteBtn) {
+      if (tab.isPlayingAudio || tab.isAudioMuted) {
+        muteBtn.classList.remove('hidden');
+        muteBtn.textContent = tab.isAudioMuted ? '🔇' : '🔊';
+        muteBtn.title = tab.isAudioMuted ? 'unmute tab' : 'mute tab';
+      } else {
+        muteBtn.classList.add('hidden');
+      }
+    }
   }
 
   function layoutTabs() {
@@ -351,6 +381,30 @@
     closeBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
+    });
+
+    // Mute button
+    const muteBtn = t.querySelector('.mute-tab');
+    if (muteBtn) {
+      muteBtn.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+      });
+      muteBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleTabMute(tab);
+      });
+    }
+
+    // Tab context menu
+    t.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      logic.showTabContextMenu({
+        tabId: tab.id,
+        url: tab.url,
+        isMuted: !!tab.isAudioMuted,
+        isPrivate: !!tab.private,
+      });
     });
   }
 
@@ -546,8 +600,19 @@
   let suggSel = -1;
   let suggToken = 0;
   let typed = '';
+  let addressJustFocused = false;
 
-  el.address.addEventListener('focus', () => setTimeout(() => el.address.select(), 0));
+  el.address.addEventListener('focus', () => {
+    addressJustFocused = true;
+    setTimeout(() => el.address.select(), 0);
+  });
+  el.address.addEventListener('mouseup', (e) => {
+    if (addressJustFocused) {
+      e.preventDefault();
+      el.address.select();
+      addressJustFocused = false;
+    }
+  });
   el.address.addEventListener('blur', () => setTimeout(() => {
     hideSuggestions();
     if (active && document.activeElement !== el.address) el.address.value = displayUrl(active);
@@ -593,18 +658,29 @@
     ]);
     if (token !== suggToken) return;
     const bm = bookmarks
-      .filter((b) => (b.url + b.title).toLowerCase().includes(q.toLowerCase()))
-      .slice(0, 3)
+      .filter((b) => (b.url + (b.title || '')).toLowerCase().includes(q.toLowerCase()))
+      .slice(0, 5)
       .map((b) => ({ ic: '★', main: b.title, sub: b.url, tag: 'bookmark', go: b.url, fill: b.url }));
     const hs = hist
       .filter((h) => !bm.some((b) => b.go === h.url))
-      .slice(0, 4)
+      .slice(0, 5)
       .map((h) => ({ ic: '◷', main: h.title || h.url, sub: h.url, tag: 'history', go: h.url, fill: h.url }));
     const rs = remote
       .filter((s) => s.toLowerCase() !== q.toLowerCase())
-      .slice(0, 5)
-      .map((s) => ({ ic: '⌕', main: s, tag: 'search.cat', go: SEARCH + encodeURIComponent(s), fill: s }));
-    suggItems = [first, ...bm, ...hs, ...rs];
+      .slice(0, 10)
+      .map((s) => ({ ic: '⌕', main: s, tag: 'search', go: SEARCH + encodeURIComponent(s), fill: s }));
+
+    // Quick provider search shortcuts
+    const quickChips = [];
+    if (!isUrlish(q) && q.trim().length > 1) {
+      quickChips.push(
+        { ic: '▶', main: `search "${q}" on youtube`, tag: 'youtube', go: `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, fill: q },
+        { ic: '⬢', main: `search "${q}" on github`, tag: 'github', go: `https://github.com/search?q=${encodeURIComponent(q)}`, fill: q },
+        { ic: '📖', main: `search "${q}" on wikipedia`, tag: 'wikipedia', go: `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}`, fill: q }
+      );
+    }
+
+    suggItems = [first, ...bm, ...hs, ...rs, ...quickChips];
     paintSuggestions();
   }
 
@@ -635,6 +711,7 @@
     shield: $('#shield-panel'),
     menu: $('#menu'),
     downloads: $('#downloads-panel'),
+    extPopup: $('#ext-popup-panel'),
   };
   function togglePanel(name, force) {
     for (const [k, p] of Object.entries(panels)) {
@@ -657,6 +734,10 @@
     e.stopPropagation();
     togglePanel(null);
   });
+  ($('#close-ext-popup-btn') || $('#ext-popup-close'))?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePanel(null);
+  });
   $('#open-downloads-folder')?.addEventListener('click', (e) => {
     e.stopPropagation();
     logic.openDownloadsFolder();
@@ -672,7 +753,7 @@
     togglePanel(null);
   });
   document.addEventListener('mousedown', (e) => {
-    if (!e.target.closest('.panel, #shield, #menu-btn, #downloads-btn, .modal')) togglePanel(null);
+    if (!e.target.closest('.panel, #shield, #menu-btn, #downloads-btn, .ext-btn, .modal')) togglePanel(null);
   });
 
   $('#menu').addEventListener('click', (e) => {
@@ -808,12 +889,21 @@
             btn.innerHTML = `<span style="font-family:var(--font-pixel);font-size:9px;color:var(--pink)">${ext.name[0]}</span>`;
           }
           btn.onclick = (e) => {
-            const rect = btn.getBoundingClientRect();
-            logic.openExtensionPopup({
-              popupUrl: ext.popupUrl,
-              x: rect.right,
-              y: rect.bottom,
-            });
+            e.stopPropagation();
+            const panel = $('#ext-popup-panel');
+            const wv = $('#ext-popup-wv');
+            const title = $('#ext-popup-title');
+            if (title) title.textContent = `${(ext.name || 'extension').toLowerCase()}.exe`;
+            if (panel.classList.contains('hidden') || wv.getAttribute('src') !== ext.popupUrl) {
+              wv.setAttribute('src', ext.popupUrl);
+              const rect = btn.getBoundingClientRect();
+              const rightOffset = Math.max(12, window.innerWidth - rect.right);
+              panel.style.right = `${rightOffset}px`;
+              panel.style.top = `${rect.bottom + 6}px`;
+              togglePanel('extPopup', true);
+            } else {
+              togglePanel('extPopup', false);
+            }
           };
           pinned.appendChild(btn);
         }
@@ -1065,9 +1155,31 @@
           fromActive: true,
         });
       }
+      case 'reload-tab': {
+        const t = tabs.find((x) => x.id === args[0]);
+        if (t?.wv) t.wv.reload();
+        return;
+      }
+      case 'toggle-mute-tab': {
+        const t = tabs.find((x) => x.id === args[0]);
+        if (t) toggleTabMute(t);
+        return;
+      }
+      case 'close-tab-by-id': {
+        const t = tabs.find((x) => x.id === args[0]);
+        if (t) closeTab(t);
+        return;
+      }
+      case 'close-other-tabs': {
+        const keepId = args[0];
+        const others = tabs.filter((x) => x.id !== keepId);
+        for (const t of others) closeTab(t);
+        return;
+      }
     }
   }
   logic.on('command', runCommand);
+  logic.on('open-url', (url, opts) => runCommand('open-url', url, opts));
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !findbar.classList.contains('hidden')) closeFind();

@@ -93,6 +93,18 @@
           </div>
         </div>
 
+        <!-- in-window extension popup panel -->
+        <div id="ext-popup-panel" class="panel window hidden">
+          <div class="window__bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span id="ext-popup-title">extension</span>
+            <button id="ext-popup-close" class="tiny-btn" style="margin-left:auto">×</button>
+          </div>
+          <div class="ext-popup-body">
+            <webview id="ext-popup-wv" partition="persist:logic" allowpopups webpreferences="contextIsolation=no, sandbox=no"></webview>
+          </div>
+        </div>
+
         <!-- shield panel -->
         <div id="shield-panel" class="panel window hidden">
           <div class="window__bar"><span class="dots"><i></i><i></i><i></i></span><span>shields.exe</span></div>

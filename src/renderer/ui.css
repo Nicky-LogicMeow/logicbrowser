@@ -184,6 +184,30 @@ a:focus {
   font-size: 7px;
   color: var(--mauve);
 }
+.tab .mute-tab {
+  -webkit-app-region: no-drag !important;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  font-size: 11px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--subtext0);
+  opacity: 0.8;
+  transition: opacity .12s, background .12s;
+}
+.tab .mute-tab:hover {
+  opacity: 1;
+  background: var(--surface0);
+}
+.tab .mute-tab.hidden {
+  display: none !important;
+}
 .tab .close {
   -webkit-app-region: no-drag !important;
   width: 22px;
@@ -429,6 +453,48 @@ body.private-active #toolbar {
 .ext-btn img {
   width: 18px;
   height: 18px;
+}
+
+#ext-popup-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 120px;
+  width: 380px;
+  height: 520px;
+  display: flex;
+  flex-direction: column;
+  z-index: 100005 !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.8);
+}
+#ext-popup-panel.hidden {
+  display: none !important;
+}
+.ext-popup-body {
+  flex: 1;
+  position: relative;
+  background: var(--bg-deep);
+  min-height: 0;
+  overflow: hidden;
+}
+#ext-popup-wv {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.mute-tab {
+  background: none;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0 3px;
+  opacity: 0.8;
+  color: var(--pink);
+  transition: opacity 0.15s, transform 0.15s;
+}
+.mute-tab:hover {
+  opacity: 1;
+  transform: scale(1.18);
 }
 
 .downloads-list {
