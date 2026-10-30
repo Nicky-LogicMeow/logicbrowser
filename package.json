@@ -1,0 +1,58 @@
+{
+  "name": "logicbrowser",
+  "productName": "LogicBrowser",
+  "version": "0.1.0",
+  "description": "a cozy, private chromium browser for big nerds. by logicmeow.",
+  "main": "src/main.js",
+  "author": "logicmeow",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --mac --arm64",
+    "dist:all": "electron-builder -mwl"
+  },
+  "build": {
+    "appId": "uk.co.logicmeow.browser",
+    "productName": "LogicBrowser",
+    "icon": "build/icon.png",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": "dmg",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "protocols": [
+      {
+        "name": "Web",
+        "schemes": [
+          "http",
+          "https"
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "@ghostery/adblocker-electron": "^2.20.3",
+    "unzipper": "^0.12.5"
+  },
+  "devDependencies": {
+    "electron": "^45.2.0",
+    "electron-builder": "^26.18.0"
+  }
+}

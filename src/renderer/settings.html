@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>settings</title>
+    <link rel="icon" href="assets/favicon-32.png" />
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div class="settings-wrap">
+      <header class="window hero-bar">
+        <div class="window__bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="window__title">settings.exe</span>
+          <span class="pill online">system</span>
+        </div>
+      </header>
+
+      <div class="settings-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="settings-nav window">
+          <button class="nav-item active" data-tab="general">
+            <span class="ic">⚙</span>
+            <span>general</span>
+          </button>
+          <button class="nav-item" data-tab="appearance">
+            <span class="ic">✦</span>
+            <span>appearance</span>
+          </button>
+          <button class="nav-item" data-tab="privacy">
+            <span class="ic">🛡</span>
+            <span>privacy &amp; shields</span>
+          </button>
+          <button class="nav-item" data-tab="newtab">
+            <span class="ic">★</span>
+            <span>new tab page</span>
+          </button>
+          <button class="nav-item" data-tab="updates">
+            <span class="ic">↑</span>
+            <span>about &amp; updates</span>
+          </button>
+        </nav>
+
+        <!-- Main Content Panes -->
+        <main class="settings-content window">
+          <!-- General Pane -->
+          <section id="pane-general" class="pane active">
+            <div class="pane-header">
+              <h2>general settings</h2>
+              <p class="muted tiny">customize default behavior and navigation</p>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-row">
+                <div class="info">
+                  <span class="title">default search engine</span>
+                  <span class="desc muted tiny">used when searching from the omnibox</span>
+                </div>
+                <select id="set-search-engine" class="custom-select">
+                  <option value="https://logicmeow.co.uk/search.cat?q=">search.cat (logicmeow)</option>
+                  <option value="https://duckduckgo.com/?q=">duckduckgo</option>
+                  <option value="https://www.google.com/search?q=">google</option>
+                  <option value="https://www.bing.com/search?q=">bing</option>
+                </select>
+              </label>
+
+              <label class="setting-row">
+                <div class="info">
+                  <span class="title">bookmarks bar</span>
+                  <span class="desc muted tiny">show bookmarks bar below the omnibox</span>
+                </div>
+                <input type="checkbox" id="set-bm-bar" class="toggle-cb" />
+              </label>
+
+              <label class="setting-row">
+                <div class="info">
+                  <span class="title">compact mode</span>
+                  <span class="desc muted tiny">slimmer titlebar and toolbar for more screen space</span>
+                </div>
+                <input type="checkbox" id="set-compact-mode" class="toggle-cb" />
+              </label>
+
+              <div class="setting-row">
+                <div class="info">
+                  <span class="title">default browser</span>
+                  <span class="desc muted tiny">make logicbrowser your default system web browser</span>
+                </div>
+                <button id="btn-make-default" class="pixel-btn">set as default</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Appearance Pane -->
+          <section id="pane-appearance" class="pane">
+            <div class="pane-header">
+              <h2>appearance &amp; themes</h2>
+              <p class="muted tiny">helium-inspired minimalism meets cozy retro cat aesthetic</p>
+            </div>
+
+            <div class="setting-group">
+              <div class="setting-row column">
+                <div class="info">
+                  <span class="title">accent color</span>
+                  <span class="desc muted tiny">theme highlights, borders, and selection</span>
+                </div>
+                <div class="color-options" id="color-picker">
+                  <button class="color-circle active" style="background:#f5c2e7" data-color="#f5c2e7" title="pink"></button>
+                  <button class="color-circle" style="background:#89dceb" data-color="#89dceb" title="cyan"></button>
+                  <button class="color-circle" style="background:#89b4fa" data-color="#89b4fa" title="lavender"></button>
+                  <button class="color-circle" style="background:#cba6f7" data-color="#cba6f7" title="mauve"></button>
+                  <button class="color-circle" style="background:#a6e3a1" data-color="#a6e3a1" title="green"></button>
+                  <button class="color-circle" style="background:#fab387" data-color="#fab387" title="peach"></button>
+                  <button class="color-circle" style="background:#f9e2af" data-color="#f9e2af" title="yellow"></button>
+                </div>
+              </div>
+
+              <label class="setting-row">
+                <div class="info">
+                  <span class="title">floating video player overlay button</span>
+                  <span class="desc muted tiny">show picture-in-picture button in the toolbar</span>
+                </div>
+                <input type="checkbox" id="set-show-pip" class="toggle-cb" checked />
+              </label>
+            </div>
+          </section>
+
+          <!-- Privacy & Shields Pane -->
+          <section id="pane-privacy" class="pane">
+            <div class="pane-header">
+              <h2>privacy &amp; shields</h2>
+              <p class="muted tiny">built-in adblocker, anti-tracking, and passkey security</p>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-row">
+                <div class="info">
+                  <span class="title">block ads &amp; trackers</span>
+                  <span class="desc muted tiny">ghostery-powered ad &amp; tracker blocking on all web pages</span>
+                </div>
+                <input type="checkbox" id="set-adblock-toggle" class="toggle-cb" />
+              </label>
+
+              <label class="setting-row">
+                <div class="info">
+                  <span class="title">do-not-track &amp; global privacy control</span>
+                  <span class="desc muted tiny">automatically send DNT=1 and Sec-GPC=1 with all requests</span>
+                </div>
+                <input type="checkbox" id="set-dnt-toggle" class="toggle-cb" checked disabled />
+              </label>
+
+              <div class="setting-row">
+                <div class="info">
+                  <span class="title">passkeys &amp; webauthn</span>
+                  <span class="desc muted tiny">touch id &amp; system keychain passkey authentication</span>
+                </div>
+                <span class="pill" style="color:var(--green)">enabled ✓</span>
+              </div>
+
+              <div class="setting-row">
+                <div class="info">
+                  <span class="title">clear browsing data</span>
+                  <span class="desc muted tiny">clear cookies, storage, cache, and history</span>
+                </div>
+                <button id="btn-clear-all" class="danger-btn">clear all data</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- New Tab Page Pane -->
+          <section id="pane-newtab" class="pane">
+            <div class="pane-header">
+              <h2>customize new tab page</h2>
+              <p class="muted tiny">make your new tab page feel right at home</p>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-row column">
+                <div class="info">
+                  <span class="title">custom greeting</span>
+                  <span class="desc muted tiny">shown in the hero box (e.g. "hello, nerd")</span>
+                </div>
+                <input type="text" id="set-newtab-greeting" class="text-input" placeholder="leave empty for automatic time-based greeting" />
+              </label>
+
+              <label class="setting-row column">
+                <div class="info">
+                  <span class="title">custom background image url</span>
+                  <span class="desc muted tiny">paste any image url for your new tab wallpaper</span>
+                </div>
+                <input type="text" id="set-newtab-bg" class="text-input" placeholder="https://example.com/wallpaper.png" />
+              </label>
+
+              <label class="setting-row">
+                <div class="info">
+                  <span class="title">quick links &amp; tiles</span>
+                  <span class="desc muted tiny">display favorite sites below search</span>
+                </div>
+                <input type="checkbox" id="set-show-tiles" class="toggle-cb" checked />
+              </label>
+            </div>
+          </section>
+
+          <!-- About & Updates Pane -->
+          <section id="pane-updates" class="pane">
+            <div class="pane-header">
+              <h2>about &amp; updates</h2>
+              <p class="muted tiny">auto-updates powered by the official github repository</p>
+            </div>
+
+            <div class="setting-group">
+              <div class="about-card">
+                <img src="assets/icon-192.png" class="about-logo" alt="" />
+                <div class="about-info">
+                  <h3 class="wordmark">logic<span>browser</span></h3>
+                  <div class="tiny muted">version <b id="ver-tag">0.1.0</b> (chromium based)</div>
+                  <div class="tiny muted" style="margin-top:4px">repository: <a href="https://github.com/Nicky-LogicMeow/logicbrowser" target="_blank" style="color:var(--cyan)">github.com/Nicky-LogicMeow/logicbrowser</a></div>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="info">
+                  <span class="title">software updates</span>
+                  <span id="update-status" class="desc muted tiny">click to check for updates against github</span>
+                </div>
+                <button id="btn-check-updates" class="pixel-btn">check for updates</button>
+              </div>
+
+              <div id="update-banner" class="update-banner hidden">
+                <div class="update-banner-title">★ update available!</div>
+                <div id="update-banner-desc" class="update-banner-desc tiny"></div>
+                <button id="btn-download-update" class="pixel-btn" style="background:var(--pink);color:var(--crust)">download update</button>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <footer class="foot">
+      <span>logicbrowser settings</span>
+      <span class="sep">·</span>
+      <span>100% lowercase</span>
+      <span class="sep">·</span>
+      <span>made by logicmeow</span>
+    </footer>
+
+    <div class="scanlines"></div>
+    <script src="settings.js"></script>
+  </body>
+</html>

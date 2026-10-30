@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>history</title>
+    <link rel="icon" href="assets/favicon-32.png" />
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="history.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="window hero">
+        <div class="window__bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="window__title">history.exe</span>
+          <span id="history-count" class="pill online">0 items</span>
+        </div>
+        <div class="window__body search-bar-row">
+          <div class="search-wrap">
+            <span class="prompt">&gt;</span>
+            <input id="q" type="text" placeholder="filter history..." spellcheck="false" autofocus />
+          </div>
+          <button id="clear-btn" class="danger-btn">clear all history</button>
+        </div>
+      </header>
+
+      <main class="window content-window">
+        <div class="window__bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="window__title">browsing log</span>
+        </div>
+        <div id="history-list" class="window__body history-list">
+          <div class="empty muted">loading history...</div>
+        </div>
+      </main>
+    </div>
+
+    <footer class="foot">
+      <span>logicbrowser history</span>
+      <span class="sep">·</span>
+      <span>100% lowercase</span>
+      <span class="sep">·</span>
+      <span>made by logicmeow</span>
+    </footer>
+
+    <div class="scanlines"></div>
+    <script src="history.js"></script>
+  </body>
+</html>

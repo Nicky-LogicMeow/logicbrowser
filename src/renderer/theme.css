@@ -1,0 +1,115 @@
+/* logicmeow theme — catppuccin mocha + pixel fonts + hard shadows */
+@font-face {
+  font-family: 'press start 2p';
+  src: url('assets/fonts/press-start-2p.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'vt323';
+  src: url('assets/fonts/vt323.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --crust: #11111b;
+  --bg-deep: #181825;
+  --bg: #1e1e2e;
+  --panel: #313244;
+  --panel-light: #45475a;
+  --line: #45475a;
+  --line-soft: #bac2de38;
+  --pink: #f5c2e7;
+  --pink-soft: #f2cdcd;
+  --red: #f38ba8;
+  --peach: #fab387;
+  --cyan: #89dceb;
+  --green: #a6e3a1;
+  --yellow: #f9e2af;
+  --lavender: #89b4fa;
+  --mauve: #cba6f7;
+  --text: #cdd6f4;
+  --muted: #a6adc8;
+  --overlay: #6c7086;
+  --font-pixel: 'press start 2p', 'courier new', monospace;
+  --font-mono: 'vt323', 'courier new', monospace;
+  --shadow-hard: 6px 6px 0 #11111ba6;
+  --shadow-hard-sm: 3px 3px 0 #11111bcc;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  outline: none !important;
+}
+
+*:focus,
+*:focus-visible,
+button:focus,
+button:focus-visible,
+input:focus,
+input:focus-visible,
+a:focus,
+a:focus-visible,
+[tabindex]:focus {
+  outline: none !important;
+}
+
+::selection {
+  background: var(--pink);
+  color: var(--crust);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pink) var(--crust);
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--crust);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--lavender) 0%, var(--pink) 50%, var(--cyan) 100%);
+  border: 2px solid var(--crust);
+  border-radius: 5px;
+}
+
+.dots {
+  display: inline-flex;
+  gap: 7px;
+}
+.dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: block;
+}
+.dots i:nth-child(1) { background: var(--red); }
+.dots i:nth-child(2) { background: var(--yellow); }
+.dots i:nth-child(3) { background: var(--green); }
+
+.pill {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  padding: 4px 6px;
+  border: 1px solid currentColor;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+@keyframes rainbow-slide {
+  from { background-position: 0 0; }
+  to { background-position: 200px 0; }
+}

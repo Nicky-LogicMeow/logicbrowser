@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>extensions</title>
+    <link rel="icon" href="assets/favicon-32.png" />
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="extensions.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="window hero">
+        <div class="window__bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="window__title">extensions.exe</span>
+          <span id="ext-count" class="pill online">0 extensions</span>
+        </div>
+        <div class="window__body install-row">
+          <div class="input-wrap">
+            <span class="prompt">&gt;</span>
+            <input id="ext-input" type="text" placeholder="chrome web store url or 32-character extension id..." spellcheck="false" autofocus />
+          </div>
+          <button id="install-btn" class="action-btn">+ install</button>
+          <a class="webstore-link" href="https://chromewebstore.google.com/category/extensions" target="_blank">web store ↗</a>
+        </div>
+      </header>
+
+      <main class="window content-window">
+        <div class="window__bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="window__title">installed extensions</span>
+        </div>
+        <div id="ext-list" class="window__body ext-list">
+          <div class="empty muted">loading extensions...</div>
+        </div>
+      </main>
+    </div>
+
+    <footer class="foot">
+      <span>logicbrowser extensions</span>
+      <span class="sep">·</span>
+      <span>chrome mv3 &amp; mv2 compatible</span>
+      <span class="sep">·</span>
+      <span>made by logicmeow</span>
+    </footer>
+
+    <div class="scanlines"></div>
+    <script src="extensions.js"></script>
+  </body>
+</html>

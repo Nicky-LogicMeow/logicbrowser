@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>uh oh</title>
+    <link rel="icon" href="assets/favicon-32.png" />
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="newtab.css" />
+    <style>
+      .wrap { max-width: 720px; padding-top: 12vh; }
+      .err { padding: 30px 36px 34px; }
+      .cat { font-size: 30px; color: var(--pink); white-space: pre; line-height: 1.1; margin: 0 0 18px; }
+      h1 { font-family: var(--font-pixel); font-weight: normal; font-size: 20px; color: var(--red); margin: 0 0 14px; line-height: 1.5; }
+      p { margin: 6px 0; color: var(--muted); }
+      code { color: var(--yellow); word-break: break-all; }
+      .actions { display: flex; gap: 14px; margin-top: 24px; flex-wrap: wrap; }
+      .actions a { text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="window">
+        <div class="window__bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="window__title">error.exe</span>
+          <span class="pill online" style="color: var(--red)">oops</span>
+        </div>
+        <div class="err">
+          <pre class="cat">  /\_/\
+ ( x.x )
+  > ^ <   *knocks site off table*</pre>
+          <h1>couldn't reach that page</h1>
+          <p><code id="url"></code></p>
+          <p><span class="prompt">&gt;</span> <span id="desc"></span> <span class="c-cyan" id="code"></span></p>
+          <p id="hint"></p>
+          <div class="actions">
+            <a class="go" id="retry" href="#">try again ↻</a>
+            <a class="go" id="search" href="#" style="background: var(--cyan)">search.cat it</a>
+          </div>
+        </div>
+      </section>
+    </main>
+    <div class="scanlines"></div>
+    <script src="error.js"></script>
+  </body>
+</html>
