@@ -295,6 +295,7 @@ function registerLogicProtocol(ses) {
       extensions: 'extensions.html',
       bookmarks: 'bookmarks.html',
       settings: 'settings.html',
+      pip: 'pip.html',
     };
     let file = url.pathname === '/' || url.pathname === '' ? pages[url.host] : url.pathname.slice(1);
     if (!file) return new Response('not found', { status: 404 });
@@ -678,6 +679,13 @@ app.on('web-contents-created', (_e, contents) => {
         { type: 'separator' }
       );
     }
+    if (p.mediaType === 'video' || p.mediaType === 'audio') {
+      items.push(
+        { label: 'floating video overlay (pip)', click: () => send('command', 'pip') },
+        { label: 'copy media address', click: () => clipboard.writeText(p.srcURL) },
+        { type: 'separator' }
+      );
+    }
     if (p.selectionText && !p.isEditable) {
       const sel = p.selectionText.trim().slice(0, 40);
       items.push(
@@ -860,6 +868,204 @@ ipcMain.handle('open-extension-popup', (_e, { popupUrl, x, y }) => {
     try { popupWindow?.close(); } catch {}
     popupWindow = null;
   });
+});
+
+// ---------------------------------------------------------------------------
+// floating picture-in-picture overlay (transparent, resizable, right-click menu)
+// ---------------------------------------------------------------------------
+let pipWindow = null;
+let pipOverlayData = null;
+
+function openPipOverlay(data) {
+  if (pipWindow && !pipWindow.isDestroyed()) {
+    pipWindow.close();
+    pipWindow = null;
+  }
+
+  pipOverlayData = data;
+  const initialOpacity = 0.94;
+
+  pipWindow = new BrowserWindow({
+    width: 520,
+    height: 310,
+    minWidth: 280,
+    minHeight: 180,
+    alwaysOnTop: true,
+    frame: false,
+    transparent: true,
+    hasShadow: true,
+    resizable: true,
+    backgroundColor: '#00000000',
+    webPreferences: {
+      preload: path.join(__dirname, 'scripts', 'pip-preload.js'),
+      sandbox: false,
+      contextIsolation: true,
+      plugins: true,
+    },
+  });
+
+  pipWindow.setAlwaysOnTop(true, 'floating');
+  pipWindow.setOpacity(initialOpacity);
+
+  pipWindow.loadURL('logic://pip/');
+
+  pipWindow.webContents.once('did-finish-load', () => {
+    pipWindow?.webContents.send('pip-init', data);
+  });
+
+  pipWindow.on('closed', () => {
+    pipWindow = null;
+    pipOverlayData = null;
+    mainWindow?.webContents.send('pip-closed');
+  });
+
+  return { ok: true };
+}
+
+ipcMain.handle('pip-open', (_e, data) => openPipOverlay(data));
+ipcMain.handle('pip-close', () => {
+  try { pipWindow?.close(); } catch {}
+  pipWindow = null;
+  return { ok: true };
+});
+ipcMain.handle('pip-set-opacity', (_e, val) => {
+  if (pipWindow && !pipWindow.isDestroyed()) {
+    pipWindow.setOpacity(Math.max(0.2, Math.min(1.0, val)));
+  }
+});
+ipcMain.handle('pip-set-size', (_e, { width, height }) => {
+  if (pipWindow && !pipWindow.isDestroyed()) {
+    pipWindow.setSize(width, height);
+  }
+});
+ipcMain.handle('pip-toggle-pin', () => {
+  if (pipWindow && !pipWindow.isDestroyed()) {
+    const next = !pipWindow.isAlwaysOnTop();
+    pipWindow.setAlwaysOnTop(next, 'floating');
+    return next;
+  }
+  return false;
+});
+
+ipcMain.handle('pip-context-menu', (_e, { currentOpacity = 0.94, isPinned = true, isPaused = false, isMuted = false }) => {
+  if (!pipWindow || pipWindow.isDestroyed()) return;
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: isPaused ? '▶  play' : '⏸  pause',
+      click: () => {
+        pipWindow?.webContents.send('pip-state-update', { action: isPaused ? 'play' : 'pause' });
+      },
+    },
+    {
+      label: isMuted ? '🔊  unmute' : '🔇  mute',
+      click: () => {
+        pipWindow?.webContents.send('pip-state-update', { action: 'toggle-mute' });
+      },
+    },
+    { type: 'separator' },
+    {
+      label: '👁  transparency',
+      submenu: [
+        {
+          label: '100% (solid)',
+          type: 'radio',
+          checked: currentOpacity >= 0.98,
+          click: () => {
+            pipWindow?.setOpacity(1.0);
+            pipWindow?.webContents.send('pip-state-update', { opacity: 1.0 });
+          },
+        },
+        {
+          label: '85% (cozy)',
+          type: 'radio',
+          checked: currentOpacity >= 0.80 && currentOpacity < 0.90,
+          click: () => {
+            pipWindow?.setOpacity(0.85);
+            pipWindow?.webContents.send('pip-state-update', { opacity: 0.85 });
+          },
+        },
+        {
+          label: '70% (translucent glass)',
+          type: 'radio',
+          checked: currentOpacity >= 0.65 && currentOpacity < 0.80,
+          click: () => {
+            pipWindow?.setOpacity(0.70);
+            pipWindow?.webContents.send('pip-state-update', { opacity: 0.70 });
+          },
+        },
+        {
+          label: '50% (ghost)',
+          type: 'radio',
+          checked: currentOpacity >= 0.45 && currentOpacity < 0.65,
+          click: () => {
+            pipWindow?.setOpacity(0.50);
+            pipWindow?.webContents.send('pip-state-update', { opacity: 0.50 });
+          },
+        },
+        {
+          label: '35% (ultra-transparent)',
+          type: 'radio',
+          checked: currentOpacity < 0.45,
+          click: () => {
+            pipWindow?.setOpacity(0.35);
+            pipWindow?.webContents.send('pip-state-update', { opacity: 0.35 });
+          },
+        },
+      ],
+    },
+    {
+      label: '📐  resize preset',
+      submenu: [
+        {
+          label: 'small (380 × 214)',
+          click: () => {
+            pipWindow?.setSize(380, 214);
+            pipWindow?.webContents.send('pip-state-update', { sizeLabel: 'sm' });
+          },
+        },
+        {
+          label: 'medium (520 × 292)',
+          click: () => {
+            pipWindow?.setSize(520, 292);
+            pipWindow?.webContents.send('pip-state-update', { sizeLabel: 'med' });
+          },
+        },
+        {
+          label: 'large (720 × 405)',
+          click: () => {
+            pipWindow?.setSize(720, 405);
+            pipWindow?.webContents.send('pip-state-update', { sizeLabel: 'lg' });
+          },
+        },
+        {
+          label: 'huge (960 × 540)',
+          click: () => {
+            pipWindow?.setSize(960, 540);
+            pipWindow?.webContents.send('pip-state-update', { sizeLabel: 'huge' });
+          },
+        },
+      ],
+    },
+    { type: 'separator' },
+    {
+      label: '📌  always on top',
+      type: 'checkbox',
+      checked: pipWindow.isAlwaysOnTop(),
+      click: (item) => {
+        pipWindow?.setAlwaysOnTop(item.checked, 'floating');
+        pipWindow?.webContents.send('pip-state-update', { alwaysOnTop: item.checked });
+      },
+    },
+    {
+      label: '✕  close overlay',
+      click: () => {
+        try { pipWindow?.close(); } catch {}
+      },
+    },
+  ]);
+
+  menu.popup({ window: pipWindow });
 });
 
 ipcMain.handle('get-state', () => ({

@@ -426,34 +426,69 @@
   el.reload.onclick = () => (active.loading ? active.wv.stop() : active.wv.reload());
   $('#home').onclick = () => navigate(NEWTAB);
 
+  let activePipTab = null;
+
   async function togglePictureInPicture() {
     if (!active?.wv) return;
     try {
-      const res = await active.wv.executeJavaScript(`
+      const info = await active.wv.executeJavaScript(`
         (() => {
           const videos = Array.from(document.querySelectorAll('video'));
-          if (!videos.length) return { ok: false, error: 'no video found on this page' };
-          const v = videos.find(vid => !vid.paused && vid.currentTime > 0) || videos[0];
-          if (document.pictureInPictureElement) {
-            document.exitPictureInPicture();
-            return { ok: true, state: 'exited' };
-          } else if (typeof v.requestPictureInPicture === 'function') {
-            v.requestPictureInPicture();
-            return { ok: true, state: 'entered' };
+          const currentUrl = location.href;
+          const isYt = /youtube\.com|youtu\.be/i.test(currentUrl);
+          let ytId = null;
+          if (isYt) {
+            const m = currentUrl.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+            if (m) ytId = m[1];
           }
-          return { ok: false, error: 'picture-in-picture is not supported on this video' };
+          const v = videos.find(vid => !vid.paused && vid.currentTime > 0) || videos[0];
+          if (!v && !ytId) return { ok: false, error: 'no video found on this page' };
+
+          const title = document.title.replace(/ - YouTube$/, '').trim() || 'video overlay';
+          const time = v ? v.currentTime : 0;
+          const paused = v ? v.paused : false;
+          const src = v ? (v.currentSrc || v.src) : null;
+
+          if (v && !v.paused) v.pause();
+
+          return {
+            ok: true,
+            title,
+            currentTime: time,
+            paused,
+            isYouTube: !!ytId,
+            videoId: ytId,
+            videoUrl: src,
+            pageUrl: currentUrl
+          };
         })()
       `);
-      if (!res.ok) {
-        toast('pip.exe', res.error || 'no video found');
-      } else {
-        toast('pip.exe', res.state === 'entered' ? 'floating video overlay enabled' : 'floating video overlay closed');
+
+      if (!info.ok) {
+        toast('pip.exe', info.error || 'no video found');
+        return;
       }
+
+      activePipTab = active;
+      await logic.openPip(info);
+      toast('pip.exe', 'floating video overlay active! (right-click for transparency & sizes)');
     } catch (e) {
       toast('pip.exe', 'could not trigger video overlay');
     }
   }
   $('#pip-btn')?.addEventListener('click', togglePictureInPicture);
+
+  logic.on('pip-closed', () => {
+    if (activePipTab?.wv) {
+      activePipTab.wv.executeJavaScript(`
+        (() => {
+          const v = document.querySelector('video');
+          if (v && v.paused) v.play().catch(() => {});
+        })()
+      `).catch(() => {});
+    }
+    activePipTab = null;
+  });
 
   let lastNewTabTime = 0;
   function handleNewTab(e) {
@@ -623,10 +658,13 @@
     renderExtensions();
     togglePanel('menu');
   };
-  document.addEventListener('mousedown', (e) => {
-    if (!e.target.closest('.panel, #shield, #menu-btn, #downloads-btn')) togglePanel(null);
+  $('#close-menu-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePanel(null);
   });
-  window.addEventListener('blur', () => togglePanel(null)); // clicking into a webview blurs the ui window
+  document.addEventListener('mousedown', (e) => {
+    if (!e.target.closest('.panel, #shield, #menu-btn, #downloads-btn, .modal')) togglePanel(null);
+  });
 
   $('#menu').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-cmd]');
@@ -638,15 +676,29 @@
   function renderBookmarks() {
     const box = $('#menu-bookmarks');
     box.innerHTML = '';
-    if (!bookmarks.length) box.innerHTML = '<div class="tiny muted" style="padding:2px 6px">nothing yet — hit ★</div>';
+    if (!bookmarks.length) {
+      box.innerHTML = '<div class="tiny muted" style="padding:2px 6px">nothing yet — hit ★</div>';
+      return;
+    }
     for (const b of bookmarks) {
       const btn = document.createElement('button');
       btn.innerHTML = `<img src="https://icons.duckduckgo.com/ip3/${hostOf(b.url)}.ico" onerror="this.style.visibility='hidden'"><span></span>`;
       btn.querySelector('span').textContent = b.title;
-      btn.title = b.url;
-      btn.onclick = () => {
-        navigate(b.url);
+      btn.title = `${b.title} (${b.url})`;
+      btn.onclick = (e) => {
+        if (e.metaKey || e.ctrlKey) {
+          createTab(b.url, { fromActive: true, background: true });
+        } else {
+          navigate(b.url);
+        }
         togglePanel(null);
+      };
+      btn.onauxclick = (e) => {
+        if (e.button === 1) {
+          e.preventDefault();
+          createTab(b.url, { fromActive: true, background: true });
+          togglePanel(null);
+        }
       };
       box.appendChild(btn);
     }
@@ -716,10 +768,20 @@
         } else {
           box.innerHTML = '';
           for (const ext of exts) {
-            const item = document.createElement('div');
-            item.style.padding = '3px 0';
-            item.innerHTML = `<span style="color:var(--text)">${ext.name}</span> <span class="c-cyan">v${ext.version}</span>`;
-            box.appendChild(item);
+            const btn = document.createElement('button');
+            btn.className = 'menu-ext-btn';
+            btn.style.width = '100%';
+            btn.style.textAlign = 'left';
+            btn.style.padding = '3px 6px';
+            btn.style.display = 'flex';
+            btn.style.justifyContent = 'space-between';
+            btn.style.alignItems = 'center';
+            btn.innerHTML = `<span style="color:var(--text);font-size:12px">${escapeHtml(ext.name)}</span> <span class="c-cyan" style="font-size:10px">v${ext.version}</span>`;
+            btn.onclick = () => {
+              createTab('logic://extensions/');
+              togglePanel(null);
+            };
+            box.appendChild(btn);
           }
         }
       }
@@ -766,12 +828,22 @@
     settings = await logic.setSetting(k, v);
     syncSettingsUI();
   };
-  $('#set-adblock').onchange = (e) => setSetting('adblock', e.target.checked).then(() => active.wv.reload());
-  $('#sp-adblock').onchange = (e) => setSetting('adblock', e.target.checked).then(() => active.wv.reload());
+  $('#set-adblock').onchange = (e) => setSetting('adblock', e.target.checked).then(() => active?.wv?.reload?.());
+  $('#sp-adblock').onchange = (e) => setSetting('adblock', e.target.checked).then(() => active?.wv?.reload?.());
   $('#set-compact').onchange = (e) => setSetting('compactMode', e.target.checked);
   const bmCheck = $('#set-bookmarks-bar');
   if (bmCheck) bmCheck.onchange = (e) => setSetting('showBookmarksBar', e.target.checked);
   syncSettingsUI();
+
+  // Adapt keyboard shortcuts for non-mac platforms
+  if (logic.platform !== 'darwin') {
+    for (const kbd of document.querySelectorAll('#menu kbd')) {
+      kbd.textContent = kbd.textContent
+        .replace(/⌘/g, 'ctrl+')
+        .replace(/⇧/g, 'shift+')
+        .replace(/⌥/g, 'alt+');
+    }
+  }
 
   // ------------------------------------------------------------------ find in page
   const findbar = $('#findbar');
@@ -951,7 +1023,7 @@
       case 'open-settings': return createTab('logic://settings/');
       case 'open-history': return createTab('logic://history/');
       case 'open-extensions': return createTab('logic://extensions/');
-      case 'open-firefox-store': return navigate('https://addons.mozilla.org/en-US/firefox/');
+      case 'open-firefox-store': return createTab('https://addons.mozilla.org/en-US/firefox/');
       case 'pip': return togglePictureInPicture();
       case 'import-bookmarks': return openImportModal();
       case 'export-bookmarks': {
@@ -962,14 +1034,19 @@
       case 'next-tab': return selectTab(tabs[(tabs.indexOf(active) + 1) % tabs.length]);
       case 'prev-tab': return selectTab(tabs[(tabs.indexOf(active) - 1 + tabs.length) % tabs.length]);
       case 'select-tab': return selectTab(args[0] === 8 ? tabs[tabs.length - 1] : tabs[args[0]]);
-      case 'default-browser': return logic.setDefaultBrowser();
-      case 'open-webstore': return navigate('https://chromewebstore.google.com/category/extensions');
-      case 'clear-data':
+      case 'default-browser': {
+        const ok = await logic.setDefaultBrowser();
+        toast('browser.exe', ok ? 'logicbrowser set as default!' : 'check system settings to set default');
+        return;
+      }
+      case 'open-webstore': return createTab('https://chromewebstore.google.com/category/extensions');
+      case 'clear-data': {
         if (confirm('clear cookies, cache, site data and history? (bookmarks stay)')) {
           await logic.clearData();
           toast('cleanup.exe', 'all clean. fresh as a cat bath.');
         }
         return;
+      }
       case 'open-url': {
         const [url, opts = {}] = args;
         const from = tabs.find((t) => t.wcId === opts.from);

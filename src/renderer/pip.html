@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>overlay — logicbrowser</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="pip.css" />
+  </head>
+  <body>
+    <div id="pip-window">
+      <!-- Title / Drag bar -->
+      <div id="pip-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span id="pip-title" class="pip-title">video overlay</span>
+        <div class="pip-controls">
+          <button id="pip-opacity-btn" class="pip-btn" title="cycle transparency (or right-click)">
+            <span>👁</span><span id="pip-opacity-label">90%</span>
+          </button>
+          <button id="pip-size-btn" class="pip-btn" title="cycle size presets">
+            <span>📐</span><span id="pip-size-label">med</span>
+          </button>
+          <button id="pip-pin-btn" class="pip-btn active" title="toggle always on top">
+            <span>📌</span>
+          </button>
+          <button id="pip-close-btn" class="pip-btn danger" title="close overlay">×</button>
+        </div>
+      </div>
+
+      <!-- Video container -->
+      <div id="pip-body">
+        <div id="pip-loading" class="pip-loading">loading video...</div>
+        <video id="pip-video" playsinline controls class="hidden"></video>
+        <iframe id="pip-frame" class="hidden" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+
+      <!-- Quick hint overlay on hover -->
+      <div id="pip-hint" class="pip-hint">right-click anywhere for transparency &amp; sizes • drag corners to resize</div>
+    </div>
+
+    <script src="pip.js"></script>
+  </body>
+</html>
