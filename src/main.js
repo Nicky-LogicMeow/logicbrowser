@@ -1191,6 +1191,7 @@ ipcMain.handle('clear-data', async () => {
 });
 ipcMain.on('blocked-reset', (_e, id) => blockedPerTab.delete(id));
 ipcMain.on('show-download', (_e, p) => shell.showItemInFolder(p));
+ipcMain.on('open-downloads-folder', () => shell.openPath(app.getPath('downloads')));
 ipcMain.on('set-default-browser', () => {
   const ok = app.setAsDefaultProtocolClient('http') && app.setAsDefaultProtocolClient('https');
   dialog.showMessageBox(mainWindow, {

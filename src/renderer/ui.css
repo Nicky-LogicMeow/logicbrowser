@@ -313,7 +313,7 @@ a:focus {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   border-bottom: 1px solid var(--crust);
   flex-shrink: 0;
-  z-index: 10;
+  z-index: 10000;
 }
 body.private-active #toolbar {
   border-top-color: var(--mauve);
@@ -474,7 +474,8 @@ body.private-active #toolbar {
 #downloads-panel {
   top: calc(100% + 4px);
   right: 44px;
-  width: 320px;
+  width: 340px;
+  z-index: 100000 !important;
 }
 
 .shield {
@@ -535,10 +536,10 @@ body.private-active #toolbar {
 /* ------------------------------------------------------------- panels */
 .panel {
   position: absolute;
-  z-index: 100;
+  z-index: 100000 !important;
   background: var(--panel);
   border: 2px solid var(--line);
-  box-shadow: var(--shadow-hard);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
   -webkit-app-region: no-drag;
 }
 .window__bar {
@@ -678,9 +679,11 @@ body.private-active #toolbar {
 #menu {
   top: calc(100% + 4px);
   right: 8px;
-  width: 300px;
-  max-height: calc(100vh - 110px);
-  overflow: auto;
+  width: 320px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 100000 !important;
 }
 .menu-list button {
   display: flex;
@@ -762,6 +765,7 @@ body.private-active #toolbar {
   flex: 1;
   min-height: 0;
   background: var(--bg);
+  z-index: 1;
 }
 #views {
   position: absolute;
@@ -953,6 +957,8 @@ body.window-fullscreen .traffic-spacer {
   flex-shrink: 0;
   user-select: none;
   scrollbar-width: none;
+  position: relative;
+  z-index: 9999;
 }
 #bookmarks-bar::-webkit-scrollbar {
   display: none;

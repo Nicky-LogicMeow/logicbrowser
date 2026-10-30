@@ -650,8 +650,17 @@
   };
   $('#downloads-btn').onclick = (e) => {
     e.stopPropagation();
+    renderDownloadsList();
     togglePanel('downloads');
   };
+  $('#close-downloads-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePanel(null);
+  });
+  $('#open-downloads-folder')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    logic.openDownloadsFolder();
+  });
   $('#menu-btn').onclick = (e) => {
     e.stopPropagation();
     renderBookmarks();

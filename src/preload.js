@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('logic', {
   clearData: () => ipcRenderer.invoke('clear-data'),
   resetBlocked: (id) => ipcRenderer.send('blocked-reset', id),
   showDownload: (p) => ipcRenderer.send('show-download', p),
+  openDownloadsFolder: () => ipcRenderer.send('open-downloads-folder'),
   setDefaultBrowser: () => ipcRenderer.send('set-default-browser'),
   installExtension: (idOrUrl) => ipcRenderer.invoke('install-extension', idOrUrl),
   installFirefoxExtension: (urlOrSlug) => ipcRenderer.invoke('install-firefox-extension', urlOrSlug),
