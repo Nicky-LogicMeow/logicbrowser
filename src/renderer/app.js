@@ -100,7 +100,8 @@
     const wv = document.createElement('webview');
     wv.setAttribute('partition', isPrivate ? `private-${id}-${Date.now()}` : state.partition);
     wv.setAttribute('allowpopups', '');
-    wv.setAttribute('webpreferences', 'contextIsolation=yes, sandbox=yes');
+    wv.setAttribute('plugins', '');
+    wv.setAttribute('webpreferences', 'contextIsolation=yes, sandbox=no');
     wv.setAttribute('src', url);
     tab.wv = wv;
     wireWebview(tab);

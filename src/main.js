@@ -36,6 +36,10 @@ const USER_AGENT =
   `AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_VERSION} Safari/537.36`;
 app.userAgentFallback = USER_AGENT;
 
+// Enable smooth media playback, hardware codecs, and unblocked autoplay (e.g. YouTube playlists)
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport,AudioServiceOutOfProcess');
+
 // ---------------------------------------------------------------------------
 // tiny json store (settings, bookmarks, history)
 // ---------------------------------------------------------------------------
@@ -377,19 +381,39 @@ async function initBlocker() {
   }
 }
 
+const blockedSessions = new Set();
+
+function isBypassedUrl(u) {
+  // Let essential video playback streams and player telemetry pass through
+  // so YouTube, Google Video, and media buffers stream smoothly without anti-adblock loops
+  return /youtube\.com|googlevideo\.com|ytimg\.com|youtu\.be/i.test(u);
+}
+
 function applyBlocker(ses) {
   if (!blocker) return;
   try {
     if (store.settings.adblock) {
-      if (!blocker.isBlockingEnabled(ses)) {
-        // the engine registers global ipc handlers per session; they're bound to the same
-        // blocker so it's safe to drop + re-register when enabling extra sessions (private tabs).
-        ipcMain.removeHandler('@ghostery/adblocker/inject-cosmetic-filters');
-        ipcMain.removeHandler('@ghostery/adblocker/is-mutation-observer-enabled');
-        blocker.enableBlockingInSession(ses);
+      if (!blockedSessions.has(ses)) {
+        blockedSessions.add(ses);
+
+        ses.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
+          if (isBypassedUrl(details.url)) {
+            return callback({ cancel: false });
+          }
+          blocker.onBeforeRequest(details, callback);
+        });
+
+        ses.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, callback) => {
+          if (isBypassedUrl(details.url)) {
+            return callback({ responseHeaders: details.responseHeaders });
+          }
+          blocker.onHeadersReceived(details, callback);
+        });
       }
-    } else if (blocker.isBlockingEnabled(ses)) {
-      blocker.disableBlockingInSession(ses);
+    } else if (blockedSessions.has(ses)) {
+      blockedSessions.delete(ses);
+      ses.webRequest.onBeforeRequest(null);
+      ses.webRequest.onHeadersReceived(null);
     }
   } catch (e) {
     console.error('adblock toggle error', e.message);
@@ -617,6 +641,7 @@ app.on('web-contents-created', (_e, contents) => {
     webPreferences.nodeIntegration = false;
     webPreferences.contextIsolation = true;
     webPreferences.sandbox = false;
+    webPreferences.plugins = true;
     if (params.src && !/^(https?|logic|about|data|file):/i.test(params.src)) _ev.preventDefault();
   });
 
