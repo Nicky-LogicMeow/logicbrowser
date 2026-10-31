@@ -622,9 +622,8 @@ function createWindow() {
     title: 'LogicBrowser',
     backgroundColor: '#1e1e2e',
     icon: path.join(RENDERER_DIR, 'assets', 'icon-192.png'),
-    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
-    trafficLightPosition: { x: 14, y: 14 },
-    titleBarOverlay: isMac ? undefined : { color: '#181825', symbolColor: '#cdd6f4', height: 40 },
+    frame: false,
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -634,10 +633,18 @@ function createWindow() {
     },
   });
 
+  if (isMac) {
+    try {
+      mainWindow.setWindowButtonVisibility(false);
+    } catch {}
+  }
+
   mainWindow.loadFile(path.join(RENDERER_DIR, 'index.html'));
   mainWindow.webContents.on('did-start-loading', () => (uiReady = false));
   mainWindow.on('enter-full-screen', () => mainWindow.webContents.send('window-fullscreen', true));
   mainWindow.on('leave-full-screen', () => mainWindow.webContents.send('window-fullscreen', false));
+  mainWindow.on('maximize', () => mainWindow?.webContents.send('window-maximized-change', true));
+  mainWindow.on('unmaximize', () => mainWindow?.webContents.send('window-maximized-change', false));
   mainWindow.on('closed', () => (mainWindow = null));
 
   // dev helper: LOGIC_SCREENSHOT=/path/out.png npm start  -> saves a screenshot and quits
@@ -1100,6 +1107,14 @@ ipcMain.handle('tab-context-menu', (_e, { tabId, url, isMuted, isPrivate }) => {
   ]);
   menu.popup({ window: mainWindow });
 });
+
+ipcMain.on('window-minimize', () => mainWindow?.minimize());
+ipcMain.on('window-maximize', () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMaximized()) mainWindow.unmaximize();
+  else mainWindow.maximize();
+});
+ipcMain.on('window-close', () => mainWindow?.close());
 
 ipcMain.handle('get-state', () => ({
   settings: store.settings,

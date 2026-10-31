@@ -30,10 +30,13 @@ contextBridge.exposeInMainWorld('logic', {
   showTabContextMenu: (opts) => ipcRenderer.invoke('tab-context-menu', opts),
   openPip: (data) => ipcRenderer.invoke('pip-open', data),
   closePip: () => ipcRenderer.invoke('pip-close'),
+  windowMin: () => ipcRenderer.send('window-minimize'),
+  windowMax: () => ipcRenderer.send('window-maximize'),
+  windowClose: () => ipcRenderer.send('window-close'),
   platform: process.platform,
   ready: () => ipcRenderer.send('ui-ready'),
   on: (channel, fn) => {
-    const allowed = ['command', 'blocked', 'download', 'window-fullscreen', 'show-screenshare-picker', 'pip-closed', 'open-url'];
+    const allowed = ['command', 'blocked', 'download', 'window-fullscreen', 'show-screenshare-picker', 'pip-closed', 'open-url', 'window-maximized-change'];
     if (!allowed.includes(channel)) return;
     ipcRenderer.on(channel, (_e, ...args) => fn(...args));
   },

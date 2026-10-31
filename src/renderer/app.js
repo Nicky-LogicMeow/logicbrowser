@@ -3,12 +3,11 @@
 (async () => {
   const $ = (s) => document.querySelector(s);
   const state = await logic.getState();
-  const isMac = state.platform === 'darwin';
   const SEARCH = state.searchUrl;
   const NEWTAB = 'logic://newtab/';
 
-  document.body.classList.add(isMac ? 'platform-darwin' : 'platform-other');
-  if (!isMac) document.querySelectorAll('kbd').forEach((k) => (k.textContent = k.textContent.replace('⌘', 'ctrl+').replace('⇧', 'shift+').replace('⌥', 'alt+')));
+  document.body.classList.add('platform-windows', 'platform-other');
+  document.querySelectorAll('kbd').forEach((k) => (k.textContent = k.textContent.replace(/⌘/g, 'Ctrl+').replace(/⇧/g, 'Shift+').replace(/⌥/g, 'Alt+')));
   $('#status-engine').textContent = `chromium ${state.chrome.split('.')[0]}`;
   $('#about-line').textContent = `logicbrowser v${state.version} · chromium ${state.chrome} · made by logicmeow`;
 
@@ -103,6 +102,7 @@
     wv.setAttribute('partition', isPrivate ? `private-${id}-${Date.now()}` : state.partition);
     wv.setAttribute('allowpopups', '');
     wv.setAttribute('plugins', '');
+    wv.setAttribute('allow', 'camera; microphone; display-capture; picture-in-picture *; fullscreen *');
     wv.setAttribute('webpreferences', 'contextIsolation=yes, sandbox=no');
     wv.setAttribute('src', url);
     tab.wv = wv;
@@ -485,52 +485,116 @@
   async function togglePictureInPicture() {
     if (!active?.wv) return;
     try {
-      const info = await active.wv.executeJavaScript(`
-        (() => {
-          const videos = Array.from(document.querySelectorAll('video'));
-          const currentUrl = location.href;
-          const isYt = /youtube\.com|youtu\.be/i.test(currentUrl);
-          let ytId = null;
-          if (isYt) {
-            const m = currentUrl.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
-            if (m) ytId = m[1];
+      const res = await active.wv.executeJavaScript(`
+        (async () => {
+          // If already in picture-in-picture, exit
+          if (document.pictureInPictureElement) {
+            try {
+              await document.exitPictureInPicture();
+              return { ok: true, action: 'exited' };
+            } catch (err) {
+              return { ok: false, error: err.message };
+            }
           }
-          const v = videos.find(vid => !vid.paused && vid.currentTime > 0) || videos[0];
-          if (!v && !ytId) return { ok: false, error: 'no video found on this page' };
 
-          const title = document.title.replace(/ - YouTube$/, '').trim() || 'video overlay';
-          const time = v ? v.currentTime : 0;
-          const paused = v ? v.paused : false;
-          const src = v ? (v.currentSrc || v.src) : null;
+          // Search all video elements in DOM, Shadow roots, and iframes
+          function findVideos(root = document) {
+            let list = [];
+            try {
+              list = Array.from(root.querySelectorAll('video'));
+              const all = Array.from(root.querySelectorAll('*'));
+              for (const el of all) {
+                if (el.shadowRoot) list = list.concat(findVideos(el.shadowRoot));
+              }
+            } catch {}
+            return list;
+          }
 
-          if (v && !v.paused) v.pause();
+          const videos = findVideos();
 
-          return {
-            ok: true,
-            title,
-            currentTime: time,
-            paused,
-            isYouTube: !!ytId,
-            videoId: ytId,
-            videoUrl: src,
-            pageUrl: currentUrl
-          };
+          // Prefer playing video
+          let v = videos.find(vid => !vid.paused && vid.currentTime > 0);
+          if (!v) v = videos.find(vid => !vid.paused);
+          if (!v) v = videos.find(vid => vid.readyState >= 1 && vid.duration > 0);
+          if (!v) v = videos.sort((a, b) => (b.clientWidth * b.clientHeight) - (a.clientWidth * a.clientHeight))[0] || videos[0];
+
+          if (!v) {
+            const frames = Array.from(document.querySelectorAll('iframe'));
+            for (const f of frames) {
+              try {
+                const subV = f.contentDocument?.querySelector('video');
+                if (subV) {
+                  v = subV;
+                  break;
+                }
+              } catch {}
+            }
+          }
+
+          if (!v) {
+            return { ok: false, error: 'no video found on this page' };
+          }
+
+          // Ensure video element can enter PiP
+          v.removeAttribute('disablepictureinpicture');
+          v.disablePictureInPicture = false;
+
+          try {
+            await v.requestPictureInPicture();
+            return { ok: true, action: 'entered', native: true };
+          } catch (pipErr) {
+            // Fallback to overlay window if browser blocks or unsupported
+            const title = (document.title || 'video overlay').replace(/ - YouTube$/, '').trim();
+            const src = v.currentSrc || v.src;
+            return {
+              ok: true,
+              native: false,
+              title,
+              videoUrl: src,
+              currentTime: v.currentTime,
+              paused: v.paused,
+              pageUrl: location.href
+            };
+          }
         })()
-      `);
+      `, true);
 
-      if (!info.ok) {
-        toast('pip.exe', info.error || 'no video found');
+      if (!res.ok) {
+        toast('pip.exe', res.error || 'no video found on this page');
         return;
       }
 
-      activePipTab = active;
-      await logic.openPip(info);
-      toast('pip.exe', 'floating video overlay active! (right-click for transparency & sizes)');
+      if (res.action === 'exited') {
+        toast('pip.exe', 'picture-in-picture closed');
+      } else if (res.action === 'entered') {
+        toast('pip.exe', 'picture-in-picture active!');
+      } else if (!res.native) {
+        activePipTab = active;
+        await logic.openPip(res);
+        toast('pip.exe', 'floating video overlay active!');
+      }
     } catch (e) {
-      toast('pip.exe', 'could not trigger video overlay');
+      toast('pip.exe', 'could not trigger picture-in-picture');
     }
   }
   $('#pip-btn')?.addEventListener('click', togglePictureInPicture);
+
+  // ------------------------------------------------------------------ windows caption controls
+  $('#win-min')?.addEventListener('click', () => logic.windowMin());
+  $('#win-max')?.addEventListener('click', () => logic.windowMax());
+  $('#win-close')?.addEventListener('click', () => logic.windowClose());
+  logic.on('window-maximized-change', (isMax) => {
+    const svg = $('#svg-max');
+    if (svg) {
+      if (isMax) {
+        svg.innerHTML = '<path fill="currentColor" d="M3,1 H9 V7 H8 V2 H3 Z M1,3 H7 V9 H1 Z M2,4 V8 H6 V4 Z"/>';
+        $('#win-max').title = 'restore';
+      } else {
+        svg.innerHTML = '<path fill="currentColor" d="M1,1 H9 V9 H1 Z M2,2 V8 H8 V2 Z"/>';
+        $('#win-max').title = 'maximize';
+      }
+    }
+  });
 
   logic.on('pip-closed', () => {
     if (activePipTab?.wv) {

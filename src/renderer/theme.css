@@ -83,18 +83,8 @@ a:focus-visible,
 }
 
 .dots {
-  display: inline-flex;
-  gap: 7px;
+  display: none !important;
 }
-.dots i {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  display: block;
-}
-.dots i:nth-child(1) { background: var(--red); }
-.dots i:nth-child(2) { background: var(--yellow); }
-.dots i:nth-child(3) { background: var(--green); }
 
 .pill {
   font-family: var(--font-pixel);

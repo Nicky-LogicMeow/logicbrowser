@@ -14,25 +14,35 @@
     <div id="app">
       <!-- ============ title bar + tabs ============ -->
       <header id="titlebar">
-        <div class="traffic-spacer"></div>
         <div class="brand" title="logicbrowser">
           <img src="assets/favicon-32.png" alt="" />
         </div>
         <div id="tabs" role="tablist"></div>
-        <button id="new-tab" class="icon-btn" title="new tab (⌘T)">+</button>
+        <button id="new-tab" class="icon-btn" title="new tab (Ctrl+T)">+</button>
         <div class="drag-fill"></div>
         <div class="window-label"><span class="exe">logicbrowser.exe</span><span class="pill online">online</span></div>
+        <div id="win-caption-controls">
+          <button id="win-min" class="win-caption-btn" title="minimize">
+            <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M0,8 H10 V9 H0 Z"/></svg>
+          </button>
+          <button id="win-max" class="win-caption-btn" title="maximize">
+            <svg id="svg-max" width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M1,1 H9 V9 H1 Z M2,2 V8 H8 V2 Z"/></svg>
+          </button>
+          <button id="win-close" class="win-caption-btn win-caption-close" title="close">
+            <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M1,0 L5,4 L9,0 L10,1 L6,5 L10,9 L9,10 L5,6 L1,10 L0,9 L4,5 L0,1 Z"/></svg>
+          </button>
+        </div>
       </header>
 
       <!-- ============ toolbar ============ -->
       <nav id="toolbar">
-        <button id="back" class="icon-btn" title="back (⌘[)">
+        <button id="back" class="icon-btn" title="back (Alt+Left)">
           <svg viewBox="0 0 16 16"><path d="M10 3 5 8l5 5" /></svg>
         </button>
-        <button id="forward" class="icon-btn" title="forward (⌘])">
+        <button id="forward" class="icon-btn" title="forward (Alt+Right)">
           <svg viewBox="0 0 16 16"><path d="m6 3 5 5-5 5" /></svg>
         </button>
-        <button id="reload" class="icon-btn" title="reload (⌘R)">
+        <button id="reload" class="icon-btn" title="reload (Ctrl+R)">
           <svg class="i-reload" viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5V5h-2.5" /></svg>
           <svg class="i-stop" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8" /></svg>
         </button>
@@ -51,7 +61,7 @@
             autocomplete="off"
             placeholder="search.cat or type a url, nerd"
           />
-          <button id="star" class="icon-btn small" title="bookmark (⌘D)">
+          <button id="star" class="icon-btn small" title="bookmark (Ctrl+D)">
             <svg viewBox="0 0 16 16"><path d="m8 2 1.8 3.8 4.2.5-3.1 2.9.8 4.1L8 11.3l-3.7 2 .8-4.1L2 6.3l4.2-.5z" /></svg>
           </button>
           <button id="install-ext-btn" class="install-ext-btn hidden" title="add this extension to logicbrowser">
@@ -82,7 +92,6 @@
         <!-- downloads panel -->
         <div id="downloads-panel" class="panel window hidden">
           <div class="window__bar">
-            <span class="dots"><i></i><i></i><i></i></span>
             <span>downloads.exe</span>
             <button id="open-downloads-folder" class="tiny-btn" style="margin-left:auto" title="open downloads directory">folder</button>
             <button id="clear-downloads" class="tiny-btn" style="margin-left:4px">clear</button>
@@ -96,7 +105,6 @@
         <!-- in-window extension popup panel -->
         <div id="ext-popup-panel" class="panel window hidden">
           <div class="window__bar">
-            <span class="dots"><i></i><i></i><i></i></span>
             <span id="ext-popup-title">extension</span>
             <button id="ext-popup-close" class="tiny-btn" style="margin-left:auto">×</button>
           </div>
@@ -107,7 +115,7 @@
 
         <!-- shield panel -->
         <div id="shield-panel" class="panel window hidden">
-          <div class="window__bar"><span class="dots"><i></i><i></i><i></i></span><span>shields.exe</span></div>
+          <div class="window__bar"><span>shields.exe</span></div>
           <div class="window__body">
             <div class="big-count"><span id="sp-count">0</span><small>blocked on this page</small></div>
             <div class="row muted">ads + trackers squished: <b id="sp-total">0</b> total</div>
@@ -119,16 +127,15 @@
         <!-- main menu -->
         <div id="menu" class="panel window hidden">
           <div class="window__bar">
-            <span class="dots"><i></i><i></i><i></i></span>
             <span>menu.exe</span>
             <button id="close-menu-btn" class="tiny-btn" style="margin-left:auto">×</button>
           </div>
           <div class="window__body menu-list">
-            <button data-cmd="new-tab"><span>new tab</span><kbd>⌘T</kbd></button>
-            <button data-cmd="new-private-tab"><span>new private tab</span><kbd>⇧⌘N</kbd></button>
-            <button data-cmd="reopen-tab"><span>reopen closed tab</span><kbd>⇧⌘T</kbd></button>
+            <button data-cmd="new-tab"><span>new tab</span><kbd>Ctrl+T</kbd></button>
+            <button data-cmd="new-private-tab"><span>new private tab</span><kbd>Ctrl+Shift+N</kbd></button>
+            <button data-cmd="reopen-tab"><span>reopen closed tab</span><kbd>Ctrl+Shift+T</kbd></button>
             <hr />
-            <button data-cmd="find"><span>find in page</span><kbd>⌘F</kbd></button>
+            <button data-cmd="find"><span>find in page</span><kbd>Ctrl+F</kbd></button>
             <div class="zoom-row">
               <span>zoom</span>
               <button data-cmd="zoom-out">−</button>
@@ -136,9 +143,9 @@
               <button data-cmd="zoom-in">+</button>
             </div>
             <hr />
-            <button data-cmd="open-settings"><span>settings</span><kbd>⌘,</kbd></button>
-            <button data-cmd="open-history"><span>history</span><kbd>⌘Y</kbd></button>
-            <button data-cmd="open-extensions"><span>extension manager</span><kbd>⇧⌘E</kbd></button>
+            <button data-cmd="open-settings"><span>settings</span><kbd>Ctrl+,</kbd></button>
+            <button data-cmd="open-history"><span>history</span><kbd>Ctrl+H</kbd></button>
+            <button data-cmd="open-extensions"><span>extension manager</span><kbd>Ctrl+Shift+E</kbd></button>
             <label class="toggle"><input type="checkbox" id="set-adblock" /> <span>block ads &amp; trackers</span></label>
             <label class="toggle"><input type="checkbox" id="set-compact" /> <span>compact mode</span></label>
             <label class="toggle"><input type="checkbox" id="set-bookmarks-bar" /> <span>bookmarks bar</span></label>
@@ -153,7 +160,7 @@
             <button data-cmd="open-webstore" style="color: var(--cyan)"><span>browse chrome web store</span></button>
             <button data-cmd="open-firefox-store" style="color: var(--peach)"><span>browse firefox add-ons</span></button>
             <hr />
-            <button data-cmd="devtools"><span>developer tools</span><kbd>⌥⌘I</kbd></button>
+            <button data-cmd="devtools"><span>developer tools</span><kbd>Ctrl+Shift+I / F12</kbd></button>
             <button data-cmd="default-browser"><span>make me your default browser</span></button>
             <button data-cmd="clear-data" class="danger"><span>clear browsing data</span></button>
             <div class="menu-foot" id="about-line">logicbrowser</div>
@@ -190,7 +197,6 @@
       <div id="screenshare-modal" class="modal-backdrop hidden">
         <div class="window screenshare-window">
           <div class="window__bar">
-            <span class="dots"><i></i><i></i><i></i></span>
             <span>screenshare.exe — choose what to share</span>
             <button id="screenshare-close" class="tiny-btn" style="margin-left:auto">×</button>
           </div>
@@ -212,7 +218,6 @@
       <div id="import-modal" class="modal-backdrop hidden">
         <div class="window" style="width: 440px; max-width: 90vw;">
           <div class="window__bar">
-            <span class="dots"><i></i><i></i><i></i></span>
             <span>import.exe — browser data</span>
             <button id="import-close" class="tiny-btn" style="margin-left:auto">×</button>
           </div>

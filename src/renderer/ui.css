@@ -59,18 +59,49 @@ a:focus {
   display: flex;
   align-items: flex-end;
   gap: 6px;
-  padding: 0 10px 0 0;
+  padding: 0 0 0 8px;
   background: #181825;
   position: relative;
   flex-shrink: 0;
+  -webkit-app-region: drag;
 }
 .traffic-spacer {
-  -webkit-app-region: drag;
-  height: 100%;
+  display: none !important;
 }
-.platform-darwin .traffic-spacer { width: 78px; }
-.platform-other .traffic-spacer { width: 4px; }
-.platform-other #titlebar { padding-right: 150px; }
+.platform-other #titlebar,
+.platform-darwin #titlebar {
+  padding-right: 0;
+}
+
+#win-caption-controls {
+  display: flex;
+  align-items: stretch;
+  height: 42px;
+  margin-left: 12px;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+.win-caption-btn {
+  width: 46px;
+  height: 100%;
+  background: transparent;
+  border: none;
+  color: var(--subtext0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background .1s, color .1s;
+}
+.win-caption-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+.win-caption-btn.win-caption-close:hover {
+  background: #e81123 !important;
+  color: #ffffff !important;
+}
 
 .brand {
   align-self: center;
